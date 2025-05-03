@@ -1,10 +1,11 @@
-use std::{fs::write, path::PathBuf, str::FromStr};
+use std::{path::PathBuf, str::FromStr};
 
 use log::info;
 use serde::{Deserialize, Serialize};
+use shell_escape::escape;
 use which::which;
 
-use crate::{FileMode, constants::WRITE_TEXT};
+use crate::FileMode;
 
 #[derive(Serialize, Deserialize, Default, Debug)]
 #[serde(rename_all = "kebab-case")]
@@ -47,46 +48,35 @@ pub fn make_filepicker_command(
                         .expect("could not convert OsStr to &str")
                 ),
             ];
-            let cwd_param = format!(
-                "--cwd-file={}",
-                cwd.to_str().expect("could not convert OsStr to &str")
+
+            cmd.push(if is_directory && mode == FileMode::Read {
+                format!(
+                    "--cwd-file={}",
+                    escape(
+                        output_path
+                            .to_str()
+                            .expect("could not convert OsStr to &str")
+                            .into()
+                    )
+                    .to_string()
+                )
+            } else {
+                format!(
+                    "--cwd-file={}",
+                    cwd.to_str().expect("could not convert OsStr to &str")
+                )
+            });
+            cmd.push(
+                escape(
+                    write_path
+                        .to_str()
+                        .expect("could not convert OsStr to &str")
+                        .into(),
+                )
+                .to_string(),
             );
 
-            match mode {
-                FileMode::Write => {
-                    write(&write_path, WRITE_TEXT).expect("could not create write file");
-                    cmd.push(cwd_param);
-                    cmd.push(
-                        write_path
-                            .to_str()
-                            .expect("could not convert OsStr to &str")
-                            .to_string(),
-                    );
-
-                    cmd.join(" ")
-                }
-                FileMode::Read => {
-                    cmd.push(if is_directory {
-                        format!(
-                            "--cwd-file={}",
-                            output_path
-                                .to_str()
-                                .expect("could not convert OsStr to &str")
-                                .to_string()
-                        )
-                    } else {
-                        cwd_param
-                    });
-                    cmd.push(
-                        write_path
-                            .to_str()
-                            .expect("could not convert OsStr to &str")
-                            .to_string(),
-                    );
-
-                    cmd.join(" ")
-                }
-            }
+            cmd.join(" ")
         }
     }
 }

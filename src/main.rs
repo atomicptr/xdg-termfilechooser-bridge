@@ -1,14 +1,13 @@
 use std::{
     env,
-    fs::{create_dir_all, read_to_string, remove_file, write},
+    fs::{create_dir_all, read_to_string, write},
     io::{Error, ErrorKind},
     path::PathBuf,
     str::FromStr,
-    time::{SystemTime, UNIX_EPOCH},
 };
 
 use config::load_config;
-use constants::{APP_NAME, WRITE_TEXT};
+use constants::APP_NAME;
 use filepicker::make_filepicker_command;
 use log::{error, info};
 use logger::{default_logger_path, setup_logger};
@@ -128,65 +127,6 @@ fn main() -> std::io::Result<()> {
     };
     let output_path = PathBuf::from_str(&args[4]).expect("could not parse output path");
 
-    // if the write path already exists, change it by adding the unix timestamp
-    let write_path = if let Some(write_path) = write_path {
-        if file_mode == FileMode::Write && write_path.exists() {
-            let unixts = SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .expect("unable to get timestamp");
-
-            info!(
-                "File {:?} already exists, adding timestamp {}",
-                &write_path,
-                &unixts.as_secs()
-            );
-            Some(write_path.with_file_name(format!(
-                    "{}.{}.{}",
-                    write_path
-                        .file_stem()
-                        .or(write_path.file_name())
-                        .or(Some(write_path.with_file_name("_download").as_os_str()))
-                        .unwrap()
-                        .to_str()
-                        .expect("failed to convert OsStr to String"),
-                    unixts.as_secs(),
-                    write_path
-                        .extension()
-                        .map(|s| s.to_str().expect("failed to convert OsStr to &str"))
-                        .unwrap_or("unknown")
-                        .to_string()
-                )))
-        } else {
-            None
-        }
-    } else {
-        None
-    };
-
-    // if filename starts with ".", replace it with "_" so they dont appear invisible
-    let write_path = if let Some(write_path) = write_path {
-        let file_name = write_path.file_name();
-
-        if file_name.is_some() && write_path.starts_with(".") {
-            let file_name = file_name
-                .map(|f| {
-                    f.to_str()
-                        .expect("failed to convert OsStr to &str")
-                        .to_string()
-                })
-                .map(|mut f| {
-                    f.replace_range(0..1, "_");
-                    f
-                })
-                .unwrap();
-            Some(write_path.with_file_name(file_name))
-        } else {
-            Some(write_path)
-        }
-    } else {
-        None
-    };
-
     info!("\tIs multiple files?\t{:?}", &is_multiple_files);
     info!("\tIs directory?\t\t{:?}", &is_directory);
     info!("\tFile Mode:\t\t{:?}", &file_mode);
@@ -216,38 +156,31 @@ fn main() -> std::io::Result<()> {
 
     info!("command exited successfully!");
 
-    let mut output_exists = false;
-
-    if output_path.exists() {
+    let output_selected_path = if output_path.exists() {
         let data = read_to_string(&output_path)?;
         let data = data.trim();
-        output_exists = data.len() > 0;
 
-        info!("Outfile content (selected path/s): {:?}", data);
-    }
-
-    match file_mode {
-        FileMode::Read => {
-            if is_directory && output_exists {
-                let path = last_selected_filepath();
-                write(
-                    path,
-                    output_path
-                        .parent()
-                        .expect("could not determine output_paths parent")
-                        .to_str()
-                        .expect("could not convert OsStr to &str"),
-                )?;
-            }
+        if data.len() > 0 {
+            info!("Outfile content (selected path/s): {:?}", data);
+            PathBuf::from_str(data).map_or(None, Some)
+        } else {
+            None
         }
-        FileMode::Write => {
-            let data = read_to_string(&write_path).unwrap_or(String::from_str("").unwrap());
+    } else {
+        None
+    };
 
-            if data.as_str() == WRITE_TEXT {
-                info!("Write file wasn't used so lets delete it again...");
-                remove_file(write_path)?;
-            }
-        }
+    if output_selected_path.is_some() {
+        let path = last_selected_filepath();
+        write(
+            path,
+            output_selected_path
+                .unwrap()
+                .parent()
+                .expect("could not determine output parent dir")
+                .to_str()
+                .expect("could not convert OsStr to &str"),
+        )?;
     }
 
     Ok(())
