@@ -7,10 +7,9 @@ use which::which;
 
 use crate::FileMode;
 
-#[derive(Serialize, Deserialize, Default, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "kebab-case")]
 pub enum FilePicker {
-    #[default]
     Yazi,
 }
 
@@ -22,6 +21,14 @@ fn filepicker_command(fp: FilePicker) -> String {
         which(cmd).map_or(None, |p| p.to_str().map_or(None, |s| Some(s.to_string())))
     })
     .expect(format!("unable to determine file picker command for {:?}", fp).as_str())
+}
+
+pub fn filepicker_from_env() -> FilePicker {
+    if let Ok(_) = which("yazi") {
+        return FilePicker::Yazi;
+    }
+
+    return FilePicker::Yazi;
 }
 
 pub fn make_filepicker_command(

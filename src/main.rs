@@ -5,7 +5,7 @@ use std::{
     str::FromStr,
 };
 
-use config::load_config;
+use config::Config;
 use constants::APP_NAME;
 use filepicker::make_filepicker_command;
 use log::{error, info};
@@ -92,7 +92,7 @@ fn main() -> std::io::Result<()> {
     setup_logger();
     let log_path = default_logger_path()?;
 
-    let config = load_config()?;
+    let config = Config::load()?;
 
     let args: Vec<String> = env::args().skip(1).collect();
 
@@ -156,7 +156,7 @@ fn main() -> std::io::Result<()> {
     }
 
     let filepicker_command = make_filepicker_command(
-        config.filepicker,
+        config.filepicker.expect("no filepicker chosen"),
         file_mode.clone(),
         is_directory,
         is_multiple_files,
@@ -166,7 +166,10 @@ fn main() -> std::io::Result<()> {
     );
 
     info!("filepicker command: {:?}", filepicker_command);
-    run_command(config.terminal, &filepicker_command);
+    run_command(
+        config.terminal.expect("no terminal chosen"),
+        &filepicker_command,
+    );
 
     info!("command exited successfully!");
 

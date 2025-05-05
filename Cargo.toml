@@ -1,7 +1,7 @@
 [package]
 name = "xdg-termfilechooser-bridge"
 description = "The bridge between xdg-desktop-portal-termfilechooser and your favorite terminal based filepicker"
-version = "0.1.1"
+version = "0.2.0"
 license = "GPL-3.0-or-later"
 edition = "2024"
 

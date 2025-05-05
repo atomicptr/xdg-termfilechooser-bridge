@@ -19,12 +19,12 @@ Edit `$XDG_CONFIG_HOME/xdg-desktop-portal-termfilechooser/config`
 ```bash
 [filechooser]
 cmd = /path/to/xdg-termfilechooser-bridge
-default_dir = $HOME
 ```
 
 ## Configuration
 
-Edit `$XDG_CONFIG_HOME/xdg-termfilechooser-bridge/config.toml`
+By default the tool will try to determine your terminal and filepicker automatically by checking if you have one of the
+supported ones installed, if you want to use a specific one please edit `$XDG_CONFIG_HOME/xdg-termfilechooser-bridge/config.toml`
 
 ```toml
 terminal = "ghostty"
@@ -40,8 +40,11 @@ If your favorite terminal filepicker isn't available feel free to [add it yourse
 
 ## Supported terminals
 
+- [alacritty](https://alacritty.org/)
+- [foot](https://codeberg.org/dnkl/foot)
 - [ghostty](https://ghostty.org/)
 - [kitty](https://sw.kovidgoyal.net/kitty/)
+- [xterm](https://invisible-island.net/xterm/)
 
 If your favorite terminal isn't available feel free to [add it yourself](./src/terminals.rs) or open an issue with the required invoke parameters.
 
