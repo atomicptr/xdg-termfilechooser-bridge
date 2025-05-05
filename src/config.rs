@@ -1,5 +1,5 @@
 use std::{
-    fs::{create_dir_all, read_to_string},
+    fs,
     io::{Error, ErrorKind},
 };
 
@@ -27,7 +27,7 @@ pub fn load_config() -> std::io::Result<Config> {
     let config_dir = config_dir.unwrap();
     let config_dir = config_dir.join(APP_NAME);
 
-    create_dir_all(&config_dir)?;
+    fs::create_dir_all(&config_dir)?;
 
     let config_file = config_dir.join("config.toml");
 
@@ -36,7 +36,7 @@ pub fn load_config() -> std::io::Result<Config> {
         return Ok(Config::default());
     }
 
-    let contents = read_to_string(config_file)?;
+    let contents = fs::read_to_string(config_file)?;
 
     Ok(toml::from_str(&contents).expect("could not parse toml file"))
 }

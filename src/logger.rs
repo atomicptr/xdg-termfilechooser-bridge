@@ -1,5 +1,5 @@
 use std::{
-    fs::create_dir_all,
+    fs,
     io::{self, Error, ErrorKind},
     path::PathBuf,
 };
@@ -21,7 +21,7 @@ fn cache_dir() -> std::io::Result<PathBuf> {
     let cache_dir = cache_dir.unwrap();
     let cache_dir = cache_dir.join(APP_NAME);
 
-    create_dir_all(&cache_dir)?;
+    fs::create_dir_all(&cache_dir)?;
 
     Ok(cache_dir)
 }

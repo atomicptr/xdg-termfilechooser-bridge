@@ -1,6 +1,5 @@
 use std::{
-    env,
-    fs::{create_dir_all, read_to_string, write},
+    env, fs,
     io::{Error, ErrorKind},
     path::PathBuf,
     str::FromStr,
@@ -35,7 +34,7 @@ fn last_selected_filepath() -> PathBuf {
     let state_dir = dirs::state_dir()
         .expect("could not determine state path")
         .join(APP_NAME);
-    create_dir_all(&state_dir).expect("could not create state dir");
+    fs::create_dir_all(&state_dir).expect("could not create state dir");
     state_dir.join("last-selected-path")
 }
 
@@ -55,7 +54,7 @@ fn last_selected_path(use_default: bool) -> PathBuf {
     }
 
     let path = PathBuf::from_str(
-        read_to_string(last_selected_file)
+        fs::read_to_string(last_selected_file)
             .expect("could not read last selected file")
             .as_str(),
     )
@@ -136,10 +135,25 @@ fn main() -> std::io::Result<()> {
     let last_selected = last_selected_path(!config.start_at_last_selected_dir.unwrap_or(true));
     info!("\tLast selected path:\t{:?}", &last_selected);
 
+    let old_write_path = write_path.clone();
+
     let write_path = match &file_mode {
         FileMode::Read => last_selected.clone(),
         FileMode::Write => last_selected.join(write_path.unwrap().file_name().unwrap()),
     };
+
+    // xdg-desktop-portal-termfilechooser creates a file at the write_path, lets move it to our new one
+    if let Some(old_write_path) = old_write_path {
+        if old_write_path.exists() && file_mode == FileMode::Write {
+            match fs::rename(&old_write_path, &write_path) {
+                Err(err) => error!(
+                    "could not move file from {:?} to {:?}: {:?}",
+                    old_write_path, write_path, err,
+                ),
+                Ok(_) => {} // do nothing
+            }
+        }
+    }
 
     let filepicker_command = make_filepicker_command(
         config.filepicker,
@@ -157,7 +171,7 @@ fn main() -> std::io::Result<()> {
     info!("command exited successfully!");
 
     let output_selected_path = if output_path.exists() {
-        let data = read_to_string(&output_path)?;
+        let data = fs::read_to_string(&output_path)?;
         let data = data.trim();
 
         if data.len() > 0 {
@@ -172,7 +186,7 @@ fn main() -> std::io::Result<()> {
 
     if output_selected_path.is_some() {
         let path = last_selected_filepath();
-        write(
+        fs::write(
             path,
             output_selected_path
                 .unwrap()
