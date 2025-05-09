@@ -69,7 +69,7 @@ pub fn make_filepicker_command(
             } else {
                 format!(
                     "--cwd-file={}",
-                    cwd.to_str().expect("could not convert OsStr to &str")
+                    escape(cwd.to_str().expect("could not convert OsStr to &str"))
                 )
             });
             cmd.push(
