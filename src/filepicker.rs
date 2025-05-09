@@ -2,7 +2,6 @@ use std::{path::PathBuf, str::FromStr};
 
 use log::info;
 use serde::{Deserialize, Serialize};
-use shell_escape::escape;
 use which::which;
 
 use crate::FileMode;
@@ -86,4 +85,10 @@ pub fn make_filepicker_command(
             cmd.join(" ")
         }
     }
+}
+
+fn escape(string: &str) -> String {
+    shlex::try_quote(string)
+        .expect("could not quote string")
+        .into()
 }
