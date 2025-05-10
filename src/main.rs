@@ -3,6 +3,7 @@ use std::{
     io::{Error, ErrorKind},
     path::PathBuf,
     str::FromStr,
+    time::{SystemTime, UNIX_EPOCH},
 };
 
 use config::Config;
@@ -137,7 +138,7 @@ fn main() -> std::io::Result<()> {
 
     let old_write_path = write_path.clone();
 
-    let write_path = match &file_mode {
+    let mut write_path = match &file_mode {
         FileMode::Read => last_selected.clone(),
         FileMode::Write => last_selected.join(write_path.unwrap().file_name().unwrap()),
     };
@@ -145,6 +146,25 @@ fn main() -> std::io::Result<()> {
     // xdg-desktop-portal-termfilechooser creates a file at the write_path, lets move it to our new one
     if let Some(old_write_path) = old_write_path {
         if old_write_path.exists() && file_mode == FileMode::Write {
+            // there is already a file at the current location with the exact same name (not good!)
+            // lets rename it
+            if write_path.exists() {
+                let time = SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs();
+
+                write_path.set_extension(if let Some(ext) = write_path.extension() {
+                    format!(
+                        "{}.{}",
+                        &time,
+                        ext.to_str().expect("couldt not convert OsStr to &str")
+                    )
+                } else {
+                    format!("{}", &time)
+                });
+            }
+
             match fs::rename(&old_write_path, &write_path) {
                 Err(err) => error!(
                     "could not move file from {:?} to {:?}: {:?}",
