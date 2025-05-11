@@ -220,5 +220,16 @@ fn main() -> std::io::Result<()> {
         )?;
     }
 
+    // clean up write path if it wasnt used
+    if write_path.exists() {
+        if let Ok(data) = fs::read_to_string(&write_path) {
+            // there was nothing written in the file
+            if data.starts_with("xdg-desktop-portal-termfilechooser saving files tutorial") {
+                info!("{:?}, appears to be unused deleting...", &write_path);
+                fs::remove_file(write_path).expect("could not delete write_path file");
+            }
+        }
+    }
+
     Ok(())
 }
