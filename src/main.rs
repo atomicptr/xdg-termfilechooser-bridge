@@ -103,9 +103,9 @@ fn main() -> std::io::Result<()> {
     info!("\tArguments:\t\t{:?}", &args);
     info!("\tLog file:\t\t{:?}", log_path);
 
-    if args.len() != NUM_ARGS {
+    if args.len() < NUM_ARGS {
         let msg = format!(
-            "Invalid number of arguments given, must be {}, {} were given.",
+            "Invalid number of arguments given, must be at least {}, {} were given.",
             NUM_ARGS,
             &args.len()
         );
