@@ -53,6 +53,8 @@ pub fn run_command(term: Terminal, run_cmd: &str) {
 
     Command::new(command)
         .arg("-e")
+        .arg("/bin/sh")
+        .arg("-c")
         .arg(run_cmd)
         .output()
         .expect(format!("failed to execute command {:?}", run_cmd).as_str());
